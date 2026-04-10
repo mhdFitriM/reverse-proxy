@@ -16,7 +16,7 @@
     reverse_proxy {$FACEAPP_UPSTREAM}
 }
 
-{$FACEAPP_API_DOMAIN} {
+http://{$FACEAPP_API_DOMAIN}, https://{$FACEAPP_API_DOMAIN} {
     import common_headers
     reverse_proxy {$FACEAPP_UPSTREAM}
 }
