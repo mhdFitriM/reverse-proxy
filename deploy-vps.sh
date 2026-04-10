@@ -12,5 +12,11 @@ if [[ ! -f ".env" ]]; then
 fi
 
 echo "Deploying shared reverse proxy from $ROOT_DIR"
+
+if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+  echo "Pulling latest Git changes..."
+  git pull --ff-only
+fi
+
 docker compose up -d
 echo "Reverse proxy deployment complete."

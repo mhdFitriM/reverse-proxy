@@ -7,6 +7,7 @@ This folder is the public VPS entry point for all domains on the same IP.
 - Terminate HTTPS on ports `80` and `443`
 - Route FaceApp domains to the FaceApp stack on `127.0.0.1:8082`
 - Route QBotu domains to the QBotu stack on `127.0.0.1:8081`
+- Run on the Ubuntu VPS host network so `127.0.0.1` means the VPS itself
 
 ## Files
 
@@ -21,6 +22,12 @@ For FaceApp, the API domain is intentionally served on both HTTP and HTTPS becau
 1. Copy `.env.example` to `.env`
 2. Put your real domains in `.env`
 3. Start with `docker compose up -d`
+
+Important:
+
+- this stack is intended for the Linux VPS only
+- it uses `network_mode: host`, so no other service on the VPS should bind public `80` or `443`
+- do not leave `example.com` placeholders in `.env`, especially `QBOTU_MINIO_DOMAIN`
 
 ## Expected App Setup
 
@@ -42,12 +49,7 @@ Use `project_qbotu_a3/docker-compose.production.yml` with the VPS override file:
 - review the real domain and secret values
 - run `docker compose -f docker-compose.production.yml -f docker-compose.vps.yml up -d --build`
 
-The VPS override binds QBotu services to localhost only:
-
-- app proxy on `127.0.0.1:8081`
-- Postgres on `127.0.0.1:5433`
-- Redis on `127.0.0.1:6379`
-- MinIO API on `127.0.0.1:9000`
-- MinIO console on `127.0.0.1:9101`
+The VPS override binds only the QBotu web proxy on `127.0.0.1:8081`.
+Postgres, Redis, and MinIO stay private on Docker networks by default.
 
 QBotu already does its own internal hostname routing, so the public reverse proxy can send all QBotu domains to the same local upstream port.
