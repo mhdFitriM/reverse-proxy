@@ -1,0 +1,37 @@
+{
+    email {$ACME_EMAIL}
+}
+
+(common_headers) {
+    encode zstd gzip
+    header {
+        -Server
+        X-Content-Type-Options nosniff
+        Referrer-Policy strict-origin-when-cross-origin
+    }
+}
+
+{$FACEAPP_DOMAIN} {
+    import common_headers
+    reverse_proxy {$FACEAPP_UPSTREAM}
+}
+
+{$FACEAPP_API_DOMAIN} {
+    import common_headers
+    reverse_proxy {$FACEAPP_UPSTREAM}
+}
+
+{$QBOTU_DOMAIN} {
+    import common_headers
+    reverse_proxy {$QBOTU_UPSTREAM}
+}
+
+{$QBOTU_API_DOMAIN} {
+    import common_headers
+    reverse_proxy {$QBOTU_UPSTREAM}
+}
+
+{$QBOTU_MINIO_DOMAIN} {
+    import common_headers
+    reverse_proxy {$QBOTU_UPSTREAM}
+}
