@@ -21,6 +21,7 @@
 
 https://{$FACEAPP_API_DOMAIN} {
     import common_headers
+    header Strict-Transport-Security "max-age=31536000"
     reverse_proxy {$FACEAPP_UPSTREAM} {
         header_up X-Forwarded-Host {host}
         header_up X-Forwarded-Proto https
@@ -29,10 +30,16 @@ https://{$FACEAPP_API_DOMAIN} {
 
 http://{$FACEAPP_API_DOMAIN} {
     import common_headers
-    reverse_proxy {$FACEAPP_UPSTREAM} {
-        header_up X-Forwarded-Host {host}
-        header_up X-Forwarded-Proto http
+    @device_http path /api/device/callbacks/* /storage/*
+
+    handle @device_http {
+        reverse_proxy {$FACEAPP_UPSTREAM} {
+            header_up X-Forwarded-Host {host}
+            header_up X-Forwarded-Proto http
+        }
     }
+
+    redir https://{$FACEAPP_API_DOMAIN}{uri} 308
 }
 
 {$QBOTU_DOMAIN} {
