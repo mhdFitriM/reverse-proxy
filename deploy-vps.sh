@@ -19,4 +19,7 @@ if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
 fi
 
 docker compose up -d
+echo "Reloading Caddy with latest mounted config..."
+docker compose exec -T caddy caddy validate --config /etc/caddy/Caddyfile
+docker compose exec -T caddy caddy reload --config /etc/caddy/Caddyfile || docker compose restart caddy
 echo "Reverse proxy deployment complete."
