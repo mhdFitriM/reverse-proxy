@@ -13,12 +13,26 @@
 
 {$FACEAPP_DOMAIN} {
     import common_headers
-    reverse_proxy {$FACEAPP_UPSTREAM}
+    reverse_proxy {$FACEAPP_UPSTREAM} {
+        header_up X-Forwarded-Host {host}
+        header_up X-Forwarded-Proto {scheme}
+    }
 }
 
-http://{$FACEAPP_API_DOMAIN}, https://{$FACEAPP_API_DOMAIN} {
+https://{$FACEAPP_API_DOMAIN} {
     import common_headers
-    reverse_proxy {$FACEAPP_UPSTREAM}
+    reverse_proxy {$FACEAPP_UPSTREAM} {
+        header_up X-Forwarded-Host {host}
+        header_up X-Forwarded-Proto https
+    }
+}
+
+http://{$FACEAPP_API_DOMAIN} {
+    import common_headers
+    reverse_proxy {$FACEAPP_UPSTREAM} {
+        header_up X-Forwarded-Host {host}
+        header_up X-Forwarded-Proto http
+    }
 }
 
 {$QBOTU_DOMAIN} {
