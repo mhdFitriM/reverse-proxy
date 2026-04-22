@@ -56,3 +56,19 @@ http://{$FACEAPP_API_DOMAIN} {
     import common_headers
     reverse_proxy {$QBOTU_UPSTREAM}
 }
+
+{$QRPOS_DOMAIN} {
+    import common_headers
+    header Strict-Transport-Security "max-age=31536000"
+
+    # Allow reasonably large product-image uploads from the merchant hub.
+    request_body {
+        max_size 25MB
+    }
+
+    reverse_proxy {$QRPOS_UPSTREAM} {
+        header_up X-Forwarded-Host {host}
+        header_up X-Forwarded-Proto https
+        header_up X-Forwarded-For {remote}
+    }
+}
