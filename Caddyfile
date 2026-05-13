@@ -124,3 +124,8 @@ http://{$FACEAPP_API_DOMAIN} {
         reverse_proxy {$FACEAUTH_ADMIN_UPSTREAM}
     }
 }
+
+
+{$QCONTROL_DOMAIN} {
+  reverse_proxy {$QCONTROL_UPSTREAM}
+}

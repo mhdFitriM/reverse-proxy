@@ -1,0 +1,58 @@
+name: Deploy reverse-proxy to VPS
+
+# CI/CD: SSH into the VPS, pull latest main, run the project's own
+# `deploy-vps.sh` script (it validates the Caddyfile before reloading so a
+# typo can't take every site down). Triggers on push to `main` + manual.
+#
+# Required GitHub secrets (Settings → Secrets and variables → Actions):
+#   VPS_HOST     — IP or hostname of the server
+#   VPS_USER     — SSH user (must have docker permission)
+#   VPS_SSH_KEY  — private SSH key (full PEM block, see qparking workflow
+#                  for ssh-keygen recipe)
+#   VPS_PORT     — optional, defaults to 22
+#
+# Logs flow into the GitHub Actions run UI — both Caddy's validate output
+# and the reload result are visible there.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: reverse-proxy-vps
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: ${{ secrets.VPS_PORT || 22 }}
+          script_stop: true
+          command_timeout: 10m
+          script: |
+            set -e
+            cd /opt/reverse-proxy
+
+            echo "==> Fetching origin"
+            git fetch --all --prune
+
+            echo "==> Hard-resetting to origin/main"
+            git reset --hard origin/main
+
+            echo "==> Current commit:"
+            git log -1 --pretty=format:"%h %s (%an, %ar)"
+
+            echo "==> Running deploy-vps.sh (validates + reloads Caddy)"
+            chmod +x ./deploy-vps.sh
+            ./deploy-vps.sh
+
+            echo "==> Stack status"
+            docker compose ps
