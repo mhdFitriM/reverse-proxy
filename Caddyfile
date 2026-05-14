@@ -11,36 +11,6 @@
     }
 }
 
-{$FACEAPP_DOMAIN} {
-    import common_headers
-    reverse_proxy {$FACEAPP_UPSTREAM} {
-        header_up X-Forwarded-Host {host}
-        header_up X-Forwarded-Proto {scheme}
-    }
-}
-
-https://{$FACEAPP_API_DOMAIN} {
-    import common_headers
-    header Strict-Transport-Security "max-age=31536000"
-    reverse_proxy {$FACEAPP_UPSTREAM} {
-        header_up X-Forwarded-Host {host}
-        header_up X-Forwarded-Proto https
-    }
-}
-
-http://{$FACEAPP_API_DOMAIN} {
-    import common_headers
-    @device_http path /api/device/callbacks/* /storage/*
-
-    handle @device_http {
-        reverse_proxy {$FACEAPP_UPSTREAM} {
-            header_up X-Forwarded-Host {host}
-            header_up X-Forwarded-Proto http
-        }
-    }
-
-    redir https://{$FACEAPP_API_DOMAIN}{uri} 308
-}
 
 {$QBOTU_DOMAIN} {
     import common_headers
@@ -56,76 +26,7 @@ http://{$FACEAPP_API_DOMAIN} {
     import common_headers
     reverse_proxy {$QBOTU_UPSTREAM}
 }
+    
 
-{$QRPOS_DOMAIN} {
-    import common_headers
-    header Strict-Transport-Security "max-age=31536000"
+    
 
-    # Allow reasonably large product-image uploads from the merchant hub.
-    request_body {
-        max_size 25MB
-    }
-
-    reverse_proxy {$QRPOS_UPSTREAM} {
-        header_up X-Forwarded-Host {host}
-        header_up X-Forwarded-Proto https
-        header_up X-Forwarded-For {remote}
-    }
-}
-
-# qparking — single-domain split:
-#   /api/*      -> Laravel backend
-#   everything else -> Vite frontend (nginx serving the SPA)
-{$QPARKING_DOMAIN} {
-    import common_headers
-    header Strict-Transport-Security "max-age=31536000"
-
-    # Larger upload window for plate images coming from the camera SDK
-    request_body {
-        max_size 25MB
-    }
-
-    @backend path /api/* /storage/* /sanctum/*
-    handle @backend {
-        reverse_proxy {$QPARKING_API_UPSTREAM} {
-            header_up X-Forwarded-Host {host}
-            header_up X-Forwarded-Proto https
-        }
-    }
-
-    handle {
-        reverse_proxy {$QPARKING_FRONTEND_UPSTREAM}
-    }
-}
-
-# face_auth — single-domain split:
-#   /api/*, /agent/*, /healthz   -> backend (Go)
-#   everything else              -> admin UI (nginx serving the SPA)
-# /agent/* is the WebSocket endpoint the LAN-side face_auth-agent dials into.
-{$FACEAUTH_DOMAIN} {
-    import common_headers
-    header Strict-Transport-Security "max-age=31536000"
-
-    # Face images can be a couple of MB
-    request_body {
-        max_size 25MB
-    }
-
-    @backend path /api/* /agent/* /healthz
-    handle @backend {
-        reverse_proxy {$FACEAUTH_API_UPSTREAM} {
-            header_up X-Forwarded-Host {host}
-            header_up X-Forwarded-Proto https
-            header_up X-Forwarded-For {remote}
-        }
-    }
-
-    handle {
-        reverse_proxy {$FACEAUTH_ADMIN_UPSTREAM}
-    }
-}
-
-
-{$QCONTROL_DOMAIN} {
-  reverse_proxy {$QCONTROL_UPSTREAM}
-}
